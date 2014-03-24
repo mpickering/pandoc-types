@@ -54,6 +54,7 @@ module Text.Pandoc.Definition ( Pandoc(..)
                               , MathType(..)
                               , Citation(..)
                               , CitationMode(..)
+                              , ImageType(E, T)
                               ) where
 
 import Data.Generics (Data, Typeable)
@@ -66,6 +67,7 @@ import GHC.Generics (Generic, Rep (..))
 import Data.String
 import Data.Char (toLower)
 import Data.Monoid
+import qualified Data.ByteString as B
 
 data Pandoc = Pandoc Meta [Block]
               deriving (Eq, Ord, Read, Show, Typeable, Data, Generic)
@@ -216,6 +218,11 @@ data QuoteType = SingleQuote | DoubleQuote deriving (Show, Eq, Ord, Read, Typeab
 -- | Link target (URL, title).
 type Target = (String, String)
 
+-- | base64 encoded images (MIME, encoding)
+type EncodedImage = (String, String) 
+
+data ImageType = T Target | E EncodedImage deriving (Show, Eq, Ord, Read, Typeable, Data, Generic)
+
 -- | Type of math element (display or inline).
 data MathType = DisplayMath | InlineMath deriving (Show, Eq, Ord, Read, Typeable, Data, Generic)
 
@@ -236,7 +243,7 @@ data Inline
     | Math MathType String  -- ^ TeX math (literal)
     | RawInline Format String -- ^ Raw inline
     | Link [Inline] Target  -- ^ Hyperlink: text (list of inlines), target
-    | Image [Inline] Target -- ^ Image:  alt text (list of inlines), target
+    | Image [Inline] ImageType -- ^ Image:  alt text (list of inlines), target
     | Note [Block]          -- ^ Footnote or endnote
     | Span Attr [Inline]    -- ^ Generic inline container with attributes
     deriving (Show, Eq, Ord, Read, Typeable, Data, Generic)
@@ -273,6 +280,7 @@ toJSON' = Aeson.genericToJSON jsonOpts
 parseJSON' :: (Generic a, Aeson.GFromJSON (Rep a))
            => Aeson.Value -> Aeson.Parser a
 parseJSON' = Aeson.genericParseJSON jsonOpts
+
 
 instance FromJSON MetaValue
   where parseJSON = parseJSON'
@@ -329,6 +337,11 @@ instance FromJSON Inline
 instance ToJSON Inline
   where toJSON = toJSON'
 
+instance FromJSON ImageType
+  where parseJSON = parseJSON'
+instance ToJSON ImageType
+  where toJSON = toJSON' 
+
 instance FromJSON Block
   where parseJSON = parseJSON'
 instance ToJSON Block
@@ -338,3 +351,4 @@ instance FromJSON Pandoc
   where parseJSON = parseJSON'
 instance ToJSON Pandoc
   where toJSON = toJSON'
+
