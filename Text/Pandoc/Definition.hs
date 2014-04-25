@@ -1,4 +1,4 @@
-{-# LANGUAGE DeriveDataTypeable, DeriveGeneric, FlexibleContexts #-}
+{-# LANGUAGE DeriveDataTypeable, DeriveGeneric, FlexibleContexts, OverloadedStrings #-}
 
 {-
 Copyright (C) 2006-2013 John MacFarlane <jgm@berkeley.edu>
@@ -54,7 +54,8 @@ module Text.Pandoc.Definition ( Pandoc(..)
                               , MathType(..)
                               , Citation(..)
                               , CitationMode(..)
-                              , ImageType(E, T)
+                              , ImageType(..)
+                              , ByteString64(..)
                               ) where
 
 import Data.Generics (Data, Typeable)
@@ -69,6 +70,8 @@ import Data.Char (toLower)
 import Data.Monoid
 import Data.ByteString (ByteString)
 import qualified Data.ByteString.Base64 as B64
+import Data.Text()
+import Data.Text.Encoding (decodeUtf8, encodeUtf8)
 
 data Pandoc = Pandoc Meta [Block]
               deriving (Eq, Ord, Read, Show, Typeable, Data, Generic)
@@ -358,9 +361,17 @@ instance FromJSON Pandoc
 instance ToJSON Pandoc
   where toJSON = toJSON'
 
+instance ToJSON ByteString where
+  toJSON = Aeson.String . decodeUtf8
+
+instance FromJSON ByteString where
+  parseJSON (Aeson.String t) = return . encodeUtf8 $ t
+  parseJSON v          = Aeson.typeMismatch "ByteString" v
+
 instance ToJSON ByteString64 where
-    toJSON (ByteString64 bs) = Aeson.String (B64.encode bs)
+    toJSON (ByteString64 bs) = toJSON (B64.encode bs)
  
---instance FromJSON ByteString64 where
---    parseJSON o = o either fail (return . ByteString64) . B64.decode
+instance FromJSON ByteString64 where
+    parseJSON o =
+        parseJSON o >>= either fail (return . ByteString64) . B64.decode 
 
