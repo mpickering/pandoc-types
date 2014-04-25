@@ -67,7 +67,8 @@ import GHC.Generics (Generic, Rep (..))
 import Data.String
 import Data.Char (toLower)
 import Data.Monoid
-import qualified Data.ByteString as B
+import Data.ByteString (ByteString)
+import qualified Data.ByteString.Base64 as B64
 
 data Pandoc = Pandoc Meta [Block]
               deriving (Eq, Ord, Read, Show, Typeable, Data, Generic)
@@ -216,12 +217,17 @@ data Block
 data QuoteType = SingleQuote | DoubleQuote deriving (Show, Eq, Ord, Read, Typeable, Data, Generic)
 
 -- | Link target (URL, title).
-type Target = (String, String)
+type Target = (String, String) 
+
+ 
+newtype ByteString64 = ByteString64 { unByteString64 :: ByteString }
+    deriving (Eq, Read, Show, Data, Typeable, Ord, Generic)
+ 
 
 -- | base64 encoded images (MIME, encoding)
-type EncodedImage = (String, String) 
+type EncodedImage = (String, ByteString64) 
 
-data ImageType = T Target | E EncodedImage deriving (Show, Eq, Ord, Read, Typeable, Data, Generic)
+data ImageType = Relative Target | Encoded EncodedImage deriving (Show, Eq, Ord, Read, Typeable, Data, Generic)
 
 -- | Type of math element (display or inline).
 data MathType = DisplayMath | InlineMath deriving (Show, Eq, Ord, Read, Typeable, Data, Generic)
@@ -351,4 +357,10 @@ instance FromJSON Pandoc
   where parseJSON = parseJSON'
 instance ToJSON Pandoc
   where toJSON = toJSON'
+
+instance ToJSON ByteString64 where
+    toJSON (ByteString64 bs) = Aeson.String (B64.encode bs)
+ 
+--instance FromJSON ByteString64 where
+--    parseJSON o = o either fail (return . ByteString64) . B64.decode
 

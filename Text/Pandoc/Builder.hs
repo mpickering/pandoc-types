@@ -162,6 +162,7 @@ import Data.Traversable
 import Control.Arrow ((***))
 import GHC.Generics (Generic)
 import qualified Data.ByteString as B
+import Data.ByteString (ByteString)
 
 #if MIN_VERSION_base(4,5,0)
 -- (<>) is defined in Data.Monoid
@@ -363,13 +364,13 @@ image :: String  -- ^ URL
       -> String  -- ^ Title
       -> Inlines -- ^ Alt text
       -> Inlines
-image url title x = singleton $ Image (toList x) $ T (url, title)
+image url title x = singleton $ Image (toList x) $ Relative (url, title)
 
-base64image :: String     -- ^Encoding
+base64image :: ByteString     -- ^Encoding
             -> String     -- ^ MIME
             -> Inlines    -- ^ Alt text
             -> Inlines
-base64image bytestring mime x = singleton $ Image (toList x) $ E (mime, bytestring)
+base64image bytestring mime x = singleton $ Image (toList x) $ Encoded (mime, ByteString64 bytestring)
 
 note :: Blocks -> Inlines
 note = singleton . Note . toList
