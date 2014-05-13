@@ -220,17 +220,18 @@ data Block
 data QuoteType = SingleQuote | DoubleQuote deriving (Show, Eq, Ord, Read, Typeable, Data, Generic)
 
 -- | Link target (URL, title).
-type Target = (String, String) 
+type Target = (String, String)
 
- 
+
 newtype ByteString64 = ByteString64 { unByteString64 :: ByteString }
     deriving (Eq, Read, Show, Data, Typeable, Ord, Generic)
- 
+
 
 -- | base64 encoded images (MIME, encoding)
-type EncodedImage = (String, ByteString64) 
+type EncodedImage = (String, ByteString64)
+type Path = String
 
-data ImageType = Relative Target | Encoded EncodedImage deriving (Show, Eq, Ord, Read, Typeable, Data, Generic)
+data ImageType = Relative Path | Encoded EncodedImage deriving (Show, Eq, Ord, Read, Typeable, Data, Generic)
 
 -- | Type of math element (display or inline).
 data MathType = DisplayMath | InlineMath deriving (Show, Eq, Ord, Read, Typeable, Data, Generic)
@@ -252,7 +253,7 @@ data Inline
     | Math MathType String  -- ^ TeX math (literal)
     | RawInline Format String -- ^ Raw inline
     | Link [Inline] Target  -- ^ Hyperlink: text (list of inlines), target
-    | Image [Inline] ImageType -- ^ Image:  alt text (list of inlines), target
+    | Image [Inline] String ImageType -- ^ Image:  alt text (list of inlines), title,  target
     | Note [Block]          -- ^ Footnote or endnote
     | Span Attr [Inline]    -- ^ Generic inline container with attributes
     deriving (Show, Eq, Ord, Read, Typeable, Data, Generic)
@@ -361,17 +362,13 @@ instance FromJSON Pandoc
 instance ToJSON Pandoc
   where toJSON = toJSON'
 
-instance ToJSON ByteString where
-  toJSON = Aeson.String . decodeUtf8
-
-instance FromJSON ByteString where
-  parseJSON (Aeson.String t) = return . encodeUtf8 $ t
-  parseJSON v          = Aeson.typeMismatch "ByteString" v
-
 instance ToJSON ByteString64 where
-    toJSON (ByteString64 bs) = toJSON (B64.encode bs)
- 
+    toJSON (ByteString64 bs) = Aeson.String . decodeUtf8 $ (B64.encode bs)
+
 instance FromJSON ByteString64 where
-    parseJSON o =
-        parseJSON o >>= either fail (return . ByteString64) . B64.decode 
+    parseJSON o = do
+      res <- case o of
+              Aeson.String t -> return $ encodeUtf8 t
+              _ -> Aeson.typeMismatch "ByteString" o
+      (either fail (return . ByteString64) . B64.decode) res
 
