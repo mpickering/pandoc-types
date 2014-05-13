@@ -207,6 +207,7 @@ data Block
                             -- column headers (each a list of blocks), and
                             -- rows (each a list of lists of blocks)
     | Div Attr [Block]      -- ^ Generic block container with attributes
+    | Figure Attr [Block] [Inline] -- ^ Generic figure element
     | Null                  -- ^ Nothing
     deriving (Eq, Ord, Read, Show, Typeable, Data, Generic)
 
