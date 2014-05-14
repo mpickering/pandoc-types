@@ -141,6 +141,8 @@ module Text.Pandoc.Builder ( module Text.Pandoc.Definition
                            , headerWith
                            , horizontalRule
                            , table
+                           , figure
+                           , figureWith
                            , simpleTable
                            , divWith
                            )
@@ -427,6 +429,12 @@ table caption cellspecs headers rows = singleton $
   Table (toList caption) aligns widths
       (map toList headers) (map (map toList) rows)
    where (aligns, widths) = unzip cellspecs
+
+figure :: Blocks -> Inlines -> Blocks
+figure = figureWith nullAttr
+
+figureWith :: Attr -> Blocks -> Inlines -> Blocks
+figureWith as bs cs = singleton $ Figure as (toList bs) (toList cs)
 
 -- | A simple table without a caption.
 simpleTable :: [Blocks]   -- ^ Headers
