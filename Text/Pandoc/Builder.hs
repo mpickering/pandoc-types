@@ -365,18 +365,18 @@ image :: String  -- ^ URL
       -> String  -- ^ Title
       -> Inlines -- ^ Alt text
       -> Inlines
-image url title x = singleton $ Image (toList x) title $ Relative url
+image url title x = singleton $ Image (toList x) title $ ImagePath url
 
 base64image :: ByteString     -- ^Encoding
             -> String     -- ^ MIME
             -> String      -- ^ Title
             -> Inlines    -- ^ Alt text
             -> Inlines
-base64image bytestring mime title x = singleton $ Image (toList x) title $ Encoded (mime, ByteString64 bytestring)
+base64image bytestring mime title x = singleton $ Image (toList x) title $ ImageData mime (ByteString64 bytestring)
 
 genImage :: String  -- ^ Title
          -> Inlines -- ^ Alt
-         -> ImageType -- ^ Target
+         -> ImageContents -- ^ Image contents
          -> Inlines
 genImage title alt t = singleton $ Image (toList alt) title t
 

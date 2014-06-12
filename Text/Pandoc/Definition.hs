@@ -54,7 +54,7 @@ module Text.Pandoc.Definition ( Pandoc(..)
                               , MathType(..)
                               , Citation(..)
                               , CitationMode(..)
-                              , ImageType(..)
+                              , ImageContents(..)
                               , ByteString64(..)
                               ) where
 
@@ -227,11 +227,8 @@ newtype ByteString64 = ByteString64 { unByteString64 :: ByteString }
     deriving (Eq, Read, Show, Data, Typeable, Ord, Generic)
 
 
--- | base64 encoded images (MIME, encoding)
-type EncodedImage = (String, ByteString64)
-type Path = String
 
-data ImageType = Relative Path | Encoded EncodedImage deriving (Show, Eq, Ord, Read, Typeable, Data, Generic)
+data ImageContents = ImagePath String | ImageData String ByteString64 deriving (Show, Eq, Ord, Read, Typeable, Data, Generic)
 
 -- | Type of math element (display or inline).
 data MathType = DisplayMath | InlineMath deriving (Show, Eq, Ord, Read, Typeable, Data, Generic)
@@ -253,7 +250,7 @@ data Inline
     | Math MathType String  -- ^ TeX math (literal)
     | RawInline Format String -- ^ Raw inline
     | Link [Inline] Target  -- ^ Hyperlink: text (list of inlines), target
-    | Image [Inline] String ImageType -- ^ Image:  alt text (list of inlines), title,  target
+    | Image [Inline] String ImageContents -- ^ Image:  alt text (list of inlines), title,  target
     | Note [Block]          -- ^ Footnote or endnote
     | Span Attr [Inline]    -- ^ Generic inline container with attributes
     deriving (Show, Eq, Ord, Read, Typeable, Data, Generic)
@@ -342,15 +339,15 @@ instance FromJSON Format
 instance ToJSON Format
   where toJSON = toJSON'
 
+instance FromJSON ImageContents
+  where parseJSON = parseJSON'
+instance ToJSON ImageContents
+  where toJSON = toJSON'
+
 instance FromJSON Inline
   where parseJSON = parseJSON'
 instance ToJSON Inline
   where toJSON = toJSON'
-
-instance FromJSON ImageType
-  where parseJSON = parseJSON'
-instance ToJSON ImageType
-  where toJSON = toJSON' 
 
 instance FromJSON Block
   where parseJSON = parseJSON'
